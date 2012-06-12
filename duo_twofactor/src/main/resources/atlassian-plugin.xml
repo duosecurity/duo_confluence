@@ -1,0 +1,20 @@
+<atlassian-plugin key="${project.groupId}.${project.artifactId}" name="${project.name}" plugins-version="2">
+    <plugin-info>
+        <description>${project.description}</description>
+        <version>${project.version}</version>
+        <vendor name="${project.organization.name}" url="${project.organization.url}" />
+    </plugin-info>
+
+    <component-import key="velocityRenderer" interface="com.atlassian.templaterenderer.TemplateRenderer" />
+
+    <servlet name="Two-Factor Login Servlet" key="twofactorlogin" class="com.duosecurity.confluence.plugins.TwoFactorLoginServlet">
+        <description>Provides the Duo two-factor login page.</description>
+        <url-pattern>/duologin</url-pattern>
+        <resource type="velocity" name="template" location="duologin.vm"/>
+    </servlet>
+
+    <web-resource key="resources" name="Web Resources">
+        <resource type="download" name="Duo-Web-v1.bundled.js" location="Duo-Web-v1.bundled.js"/>
+    </web-resource>
+
+</atlassian-plugin>
