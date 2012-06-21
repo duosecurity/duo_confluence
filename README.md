@@ -28,7 +28,7 @@ configuration and install the plugin.
 
 # Manual Installation Instructions
 
-Find the top directory of your Confluence installation, called $CONFLUENCE_DIR
+Find the top directory of your Confluence installation, called `$CONFLUENCE_DIR`
 below.  This is usually /opt/atlassian/confluence.
 
 ## First Steps
@@ -55,15 +55,18 @@ Copy the prebuilt duo.jar from etc into the Confluence lib directory.
 The plugin provides the UI to send credentials to Duo and post results back.
 
 Using the Confluence UI, upload and install
-`etc/duo-twofactor-1.0-SNAPSHOT.jar`.
+etc/duo-twofactor-1.0-SNAPSHOT.jar.
 
 ## Install the Seraph filter
 
-  cp etc/duo-filter-1.0-SNAPSHOT.jar $CONFLUENCE_DIR/confluence/WEB-INF/lib
+Copy the prebuilt duo-filter-1.0-SNAPSHOT.jar from etc into the Confluence lib directory.
+
+    cp etc/duo-filter-1.0-SNAPSHOT.jar $CONFLUENCE_DIR/confluence/WEB-INF/lib
 
 ## Configure Confluence
 
-web.xml is located at `$CONFLUENCE_DIR/confluence/WEB-INF/web.xml`.
+Configure Confluence by editing web.xml, located at
+`$CONFLUENCE_DIR`/confluence/WEB-INF/web.xml.
 
 Edit web.xml to add the filter.  Use the appropriate values for `ikey`,
 `skey`, `akey`, and `host`.
@@ -140,12 +143,12 @@ as described in **Install duo.jar**.
 
 ### Optionally customize the Duo authentication page
 
-The authentication page is `duo_twofactor/src/main/resources/duologin.vm`.  It
+The authentication page is duo_twofactor/src/main/resources/duologin.vm.  It
 can be used as-is, or styled to match your organization.
 
 If you want the Duo authentication page to include other resources, such as 
 scripts or images, put them in the resources directory as well, and edit
-`atlassian-plugin.xml` to add them to the served resources.  After customizing,
+atlassian-plugin.xml to add them to the served resources.  After customizing,
 rebuild and install the jar.
 
 ### Build the jar
