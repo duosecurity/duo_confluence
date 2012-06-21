@@ -12,7 +12,21 @@ displays the Duo frame to the user to gather credentials.
 
 This project has been tested with Confluence 4.2.1.
 
-# Installation and configuration
+# Automatic Installation Instructions
+
+Run the install script as follows:
+
+```
+$ ./install.sh -i <your_ikey> -s <your_skey> -h <your_host> -d <splunk_location>
+```
+
+- The -d option specifies where Confluence is installed (not required, defaults to /opt/atlassian/confluence)
+- You can get your ikey, skey, and host from the administrative panel at http://admin.duosecurity.com. The integration type should be Web SDK.
+
+After running the install script, follow the instructions to edit your
+configuration and install the plugin.
+
+# Manual Installation Instructions
 
 Find the top directory of your Confluence installation, called $CONFLUENCE_DIR
 below.  This is usually /opt/atlassian/confluence.
@@ -75,7 +89,7 @@ Edit web.xml to add the filter.  Use the appropriate values for `ikey`,
         </init-param>
     </filter>
 
-Edit web.xml to add the filter mapping.  The mapping must be after security
+Edit web.xml to add the filter mapping.  The mapping must be after the security
 filter and before any post-seraph filters.
 
     <filter-mapping>
@@ -102,3 +116,56 @@ authentication token is used.  For more information, see <http://confluence.atla
 
 Report any bugs, feature requests, etc. to us directly:
 <https://github.com/duosecurity/duo_confluence/issues>
+
+# Appendix: Building manually
+
+Jars and templates for duo_confluence are located in the etc directory.  If
+you'd prefer to build your own jars, here is how to do it.  The plugin jar
+must be rebuilt if you want to customize the Duo authentication page.
+
+## Build the duo_java jar
+
+If you'd prefer to build your own duo.jar, the source is available from Github
+at <https://github.com/duosecurity/duo_java>.  In a temporary directory:
+
+    git clone git://github.com/duosecurity/duo_java.git
+    mkdir class
+    javac duo_java/DuoWeb/src/com/duosecurity/Base64.java duo_java/DuoWeb/src/com/duosecurity/DuoWeb.java duo_java/DuoWeb/src/com/duosecurity/Util.java -d class
+    jar cf duo.jar -C class .
+
+After this step, the built jar can be copied to the Confluence lib directory
+as described in **Install duo.jar**.
+
+## Build the plugin jar
+
+### Optionally customize the Duo authentication page
+
+The authentication page is `duo_twofactor/src/main/resources/duologin.vm`.  It
+can be used as-is, or styled to match your organization.
+
+If you want the Duo authentication page to include other resources, such as 
+scripts or images, put them in the resources directory as well, and edit
+`atlassian-plugin.xml` to add them to the served resources.  After customizing,
+rebuild and install the jar.
+
+### Build the jar
+
+If you'd prefer to build your own duo-twofactor-1.0-SNAPSHOT.jar, it can
+be built with Maven:
+
+    cd duo_twofactor
+    mvn package
+
+After this step, the built jar can be installed as described in
+**Install the plugin**.
+
+## Build the Seraph filter jar
+
+If you'd prefer to build your own duo-filter-1.0-SNAPSHOT.jar, it can be
+built with Maven:
+
+    cd duo_seraph_filter
+    mvn package
+
+After this step, the built jar can be installed as described in
+**Install the Seraph filter**.
