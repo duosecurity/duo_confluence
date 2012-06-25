@@ -12,12 +12,24 @@ displays the Duo frame to the user to gather credentials.
 
 This project has been tested with Confluence 4.2.1.
 
+# First Steps
+
+* [Sign up for a Duo account](http://www.duosecurity.com/pricing).
+* Create a new Web SDK integration to get an ikey, skey, and API hostname.
+(See [Getting Started](http://www.duosecurity.com/docs/getting_started)
+for help.)
+* Use [NTP](http://www.ntp.org/) to ensure that your server's time is correct.
+* Generate an akey.  This is string of at least 40 characters that you should
+keep secret from Duo.
+
+See <http://www.duosecurity.com/docs/duoweb> for detailed instructions.
+
 # Automatic Installation Instructions
 
 Run the install script as follows:
 
 ```
-$ ./install.sh -i <your_ikey> -s <your_skey> -h <your_host> -d <splunk_location>
+$ ./install.sh -i <your_ikey> -s <your_skey> -h <your_host> -d <confluence_location>
 ```
 
 - The -d option specifies where Confluence is installed (not required, defaults to /opt/atlassian/confluence)
@@ -30,19 +42,6 @@ configuration and install the plugin.
 
 Find the top directory of your Confluence installation, called `$CONFLUENCE_DIR`
 below.  This is usually /opt/atlassian/confluence.
-
-## First Steps
-
-* [Sign up for a Duo account](http://www.duosecurity.com/pricing)
-(free for <10 users!)
-* Create a new Web SDK integration to get an ikey, skey, and API hostname.
-(See [Getting Started](http://www.duosecurity.com/docs/getting_started)
-for help.)
-* Use [NTP](http://www.ntp.org/) to ensure that your server's time is correct.
-* Generate an akey.  This is string of at least 40 characters that you should
-keep secret from Duo.
-
-See <http://www.duosecurity.com/docs/duoweb> for detailed instructions.
 
 ## Install the duo_java jar
 
@@ -122,7 +121,7 @@ Report any bugs, feature requests, etc. to us directly:
 
 # Appendix: Building manually
 
-Jars and templates for duo_confluence are located in the etc directory.  If
+Jars and templates are located in the etc directory.  If
 you'd prefer to build your own jars, here is how to do it.  The plugin jar
 must be rebuilt if you want to customize the Duo authentication page.
 
@@ -143,8 +142,9 @@ as described in **Install duo.jar**.
 
 ### Optionally customize the Duo authentication page
 
-The authentication page is duo_twofactor/src/main/resources/duologin.vm.  It
-can be used as-is, or styled to match your organization.
+The authentication page template is
+duo_twofactor/src/main/resources/duologin.vm.  It can be used as-is, or styled
+to match your organization.
 
 If you want the Duo authentication page to include other resources, such as 
 scripts or images, put them in the resources directory as well, and edit
