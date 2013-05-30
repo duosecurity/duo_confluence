@@ -77,7 +77,7 @@ if [ $? != 0 ]; then
 fi
 
 echo "duo_confluence jars have been installed. Next steps, in order:"
-echo "- Upload and install the plugin in etc/duo-twofactor-1.0-SNAPSHOT.jar "
+echo "- Upload and install the plugin in etc/duo-twofactor-1.1-SNAPSHOT.jar "
 echo "  using the Confluence web UI."
 echo "- Edit web.xml, located at $CONFLUENCE/confluence/WEB-INF/web.xml,"
 echo "  adding the following after the security filter and before any "
