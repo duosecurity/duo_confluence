@@ -1,16 +1,16 @@
 # Overview
 
-**duo_confluence** - Duo two-factor authentication filter for Confluence.
+**duo_confluence** - Duo two-factor authentication for Confluence.
 
-Adds Duo two-factor authentication to existing Seraph user authentication for
-Confluence by redirecting the user to provide Duo credentials for requests
-which require a logged-in user.
+# Usage
 
-There are two parts to this project.  `duo_seraph_filter` is a Seraph
-filter which redirects the user.  `duo_twofactor` is a Confluence plugin which
-displays the Duo frame to the user to gather credentials.
+Documentation: <https://www.duosecurity.com/docs/confluence>
 
-This project has been tested with Confluence 4.2.1.
+# Support
 
-Documentation and installation instructions:
-<https://www.duosecurity.com/docs/confluence>
+Report any bugs, feature requests, etc. to us directly:
+<https://github.com/duosecurity/duo_confluence/issues>
+
+Have fun!
+
+<http://www.duosecurity.com>
