@@ -31,6 +31,8 @@ public class DuoAuthFilter implements javax.servlet.Filter
     public static final String DUO_AUTH_SUCCESS_KEY = "duo.authsuccess.key";
     /** request attribute for Duo response. */
     private static final String DUO_RESPONSE_ATTRIBUTE = "sig_response";
+    /** page used for mobile login **/
+    private String mobileLoginUrl = "/plugins/servlet/mobile/login";
     /** config **/
     private String ikey;
     private String skey;
@@ -40,9 +42,11 @@ public class DuoAuthFilter implements javax.servlet.Filter
     private String[] unprotectedDirs = {"/download/resources/com.duosecurity.confluence.plugins.duo-twofactor:resources/"};
 
     /**
-     * Return true if url is used for the Duo auth page.
+     * Return true if url should not be protected by Duo auth, even if we have
+     * a local user.
      */
-    private boolean isDuoPage(String url) {
+    private boolean isUnprotectedPage(String url) {
+        // Is this url used for Duo auth?
         if (url.equals(this.loginUrl)) {
             return true;
         }
@@ -50,6 +54,14 @@ public class DuoAuthFilter implements javax.servlet.Filter
             if (url.startsWith(dir)) {
                 return true;
             }
+        }
+        // Is this url used for mobile login?
+        // This url is POSTed to after we have a user, but we'd rather not send
+        // the user from here to the Duo auth, because there could be
+        // credentials in the parameters that we'd want to take out of the URL
+        // we redirect back to.
+        if (url.equals(this.mobileLoginUrl)) {
+            return true;
         }
         return false;
     }
@@ -65,8 +77,7 @@ public class DuoAuthFilter implements javax.servlet.Filter
         HttpSession session = httpServletRequest.getSession();
         Principal principal = httpServletRequest.getUserPrincipal();
 
-        if (!isDuoPage(httpServletRequest.getRequestURI())) {
-            // We are not serving a page used for duo auth.
+        if (!isUnprotectedPage(httpServletRequest.getRequestURI())) {
             if (principal != null) {
                 // User has logged in locally, has there been a Duo auth?
                 if (session.getAttribute(DUO_AUTH_SUCCESS_KEY) == null) {
