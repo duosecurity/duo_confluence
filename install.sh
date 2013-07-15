@@ -47,7 +47,7 @@ fi
 
 # make sure we haven't already installed
 if [ -e $CONFLUENCE/confluence/WEB-INF/lib/duo-filter-1.1-SNAPSHOT.jar ]; then
-    echo "duo-filter-1.0-SNAPSHOT.jar already exists in $CONFLUENCE/confluence/WEB-INF/lib.  Move or remove this jar to continue."
+    echo "duo-filter-1.1-SNAPSHOT.jar already exists in $CONFLUENCE/confluence/WEB-INF/lib.  Move or remove this jar to continue."
     echo 'exiting'
     exit 1
 fi
@@ -71,7 +71,7 @@ fi
 # install the seraph filter jar
 cp etc/duo-filter-1.1-SNAPSHOT.jar $CONFLUENCE/confluence/WEB-INF/lib
 if [ $? != 0 ]; then
-    echo 'Could not copy duo-filter-1.0-SNAPSHOT.jar, please contact support@duosecurity.com'
+    echo 'Could not copy duo-filter-1.1-SNAPSHOT.jar, please contact support@duosecurity.com'
     echo 'exiting'
     exit 1
 fi
