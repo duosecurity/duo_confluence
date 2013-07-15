@@ -1,9 +1,11 @@
+<!DOCTYPE html>
 <html>
   <head>
     <title>Duo Authentication</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
   </head>
 
-  <body>
+  <body style="text-align: center;">
     <h1>Duo Authentication</h1>
 
      <div>
@@ -15,7 +17,7 @@
            'post_action': "$actionUrl"
          });
        </script>
-       <iframe height="100%" width="100%" id="duo_iframe" />
+       <iframe height="500" width="620" id="duo_iframe" frameborder="0"></iframe>
      </div>
 
   </body>
