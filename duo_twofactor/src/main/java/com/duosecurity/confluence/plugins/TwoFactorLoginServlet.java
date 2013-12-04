@@ -27,7 +27,8 @@ public class TwoFactorLoginServlet extends HttpServlet
     public static final String DUO_REQUEST_KEY = "duo.request.key";
     public static final String DUO_HOST_KEY = "duo.host.key";
     public static final String DUO_ORIGINAL_URL_KEY = "duo.originalurl.key";
-    /** request attribute for Duo response. */
+
+    /** key in a session for Duo response. */
     private static final String DUO_RESPONSE_ATTRIBUTE = "sig_response";
     
     public TwoFactorLoginServlet(TemplateRenderer renderer)
@@ -37,7 +38,6 @@ public class TwoFactorLoginServlet extends HttpServlet
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
     {
-        HttpSession session = request.getSession();
         Map<String,Object> context = new HashMap<String,Object>();
         final String actionUrl = request.getServletPath();
         // Encode the original URL suitably for a query param, since the
@@ -53,8 +53,11 @@ public class TwoFactorLoginServlet extends HttpServlet
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
     {
-        // Send the user to the original destination with the Duo response.
-        response.sendRedirect(UriBuilder.fromUri(request.getParameter(DUO_ORIGINAL_URL_KEY)).queryParam(DUO_RESPONSE_ATTRIBUTE, request.getParameter(DUO_RESPONSE_ATTRIBUTE)).build().toString());
+        HttpSession session = request.getSession();
+        // Put the Duo response in the session.
+        session.setAttribute(DUO_RESPONSE_ATTRIBUTE, request.getParameter(DUO_RESPONSE_ATTRIBUTE));
+        // Send the user to the original destination.
+        response.sendRedirect(UriBuilder.fromUri(request.getParameter(DUO_ORIGINAL_URL_KEY)).build().toString());
     }
 
 }

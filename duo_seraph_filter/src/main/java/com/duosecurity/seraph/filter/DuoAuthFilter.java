@@ -24,16 +24,19 @@ public class DuoAuthFilter implements javax.servlet.Filter
     private FilterConfig filterConfig;
 
     public static final String OS_AUTHSTATUS_KEY = "os_authstatus";
+
     /** keys in a session where Duo attributes are stored. */
     public static final String DUO_REQUEST_KEY = "duo.request.key";
     public static final String DUO_HOST_KEY = "duo.host.key";
     public static final String DUO_ORIGINAL_URL_KEY = "duo.originalurl.key";
     public static final String DUO_AUTH_SUCCESS_KEY = "duo.authsuccess.key";
-    /** request attribute for Duo response. */
+
+    /** key in a session for Duo response. */
     private static final String DUO_RESPONSE_ATTRIBUTE = "sig_response";
-    /** page used for mobile login **/
+
+    /* page used for mobile login */
     private String mobileLoginUrl = "/plugins/servlet/mobile/login";
-    /** config **/
+    /* config */
     private String ikey;
     private String skey;
     private String akey;
@@ -82,10 +85,10 @@ public class DuoAuthFilter implements javax.servlet.Filter
                 // User has logged in locally, has there been a Duo auth?
                 if (session.getAttribute(DUO_AUTH_SUCCESS_KEY) == null) {
                     // are we coming from the Duo auth servlet?
-                    String duoResponse = request.getParameter(DUO_RESPONSE_ATTRIBUTE);
+                    String duoResponse = (String) session.getAttribute(DUO_RESPONSE_ATTRIBUTE);
                     if (duoResponse != null) {
                         String duoUsername = DuoWeb.verifyResponse(ikey, skey, akey, duoResponse);
-                        if (duoUsername != null) {
+                        if (duoUsername.equals(principal.getName())) {
                             session.setAttribute(DUO_AUTH_SUCCESS_KEY, true);
                         } else {
                             needAuth = true;
