@@ -46,8 +46,8 @@ if [ -e $CONFLUENCE/confluence/WEB-INF/lib/duo.jar ]; then
 fi
 
 # make sure we haven't already installed
-if [ -e $CONFLUENCE/confluence/WEB-INF/lib/duo-filter-1.1-SNAPSHOT.jar ]; then
-    echo "duo-filter-1.1-SNAPSHOT.jar already exists in $CONFLUENCE/confluence/WEB-INF/lib.  Move or remove this jar to continue."
+if [ -e $CONFLUENCE/confluence/WEB-INF/lib/duo-filter-1.2-SNAPSHOT.jar ]; then
+    echo "duo-filter-1.2-SNAPSHOT.jar already exists in $CONFLUENCE/confluence/WEB-INF/lib.  Move or remove this jar to continue."
     echo 'exiting'
     exit 1
 fi
@@ -69,15 +69,15 @@ if [ $? != 0 ]; then
 fi
 
 # install the seraph filter jar
-cp etc/duo-filter-1.1-SNAPSHOT.jar $CONFLUENCE/confluence/WEB-INF/lib
+cp etc/duo-filter-1.2-SNAPSHOT.jar $CONFLUENCE/confluence/WEB-INF/lib
 if [ $? != 0 ]; then
-    echo 'Could not copy duo-filter-1.1-SNAPSHOT.jar, please contact support@duosecurity.com'
+    echo 'Could not copy duo-filter-1.2-SNAPSHOT.jar, please contact support@duosecurity.com'
     echo 'exiting'
     exit 1
 fi
 
 echo "duo_confluence jars have been installed. Next steps, in order:"
-echo "- Upload and install the plugin in etc/duo-twofactor-1.2-SNAPSHOT.jar "
+echo "- Upload and install the plugin in etc/duo-twofactor-1.3-SNAPSHOT.jar "
 echo "  using the Confluence web UI."
 echo "- Edit web.xml, located at $CONFLUENCE/confluence/WEB-INF/web.xml,"
 echo "  adding the following after the security filter and before any "
