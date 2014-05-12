@@ -54,7 +54,7 @@ fi
 
 # we don't actually write to web.xml, so just warn if it's already there
 grep '<filter-name>duoauth</filter-name>' $CONFLUENCE/confluence/WEB-INF/web.xml >/dev/null
-if [ $? == 0 ]; then
+if [ $? = 0 ]; then
     echo "Warning: It looks like the Duo authenticator has already been added to Confluence's web.xml."
 fi
 
