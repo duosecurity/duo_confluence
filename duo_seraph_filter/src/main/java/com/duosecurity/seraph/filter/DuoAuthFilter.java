@@ -1,7 +1,13 @@
 package com.duosecurity.seraph.filter;
 
-import com.duosecurity.DuoWeb;
+import com.duosecurity.client.Http;
+import com.duosecurity.duoweb.DuoWeb;
+import com.duosecurity.duoweb.DuoWebException;
+import com.squareup.okhttp.Response;
+import java.net.SocketTimeoutException;
 import java.net.URLEncoder;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -12,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import org.apache.log4j.Category;
+import org.json.JSONObject;
 
 @SuppressWarnings("UnusedDeclaration")
 public class DuoAuthFilter implements javax.servlet.Filter {
@@ -29,6 +36,9 @@ public class DuoAuthFilter implements javax.servlet.Filter {
   /** key in a session for Duo response. */
   private static final String DUO_RESPONSE_ATTRIBUTE = "sig_response";
 
+  /** Number of tries to attempt a preauth call to Duo. */
+  private static final int MAX_TRIES = 3;
+
   /* page used for mobile login */
   private String mobileLoginUrl = "/plugins/servlet/mobile/login";
   /* config */
@@ -42,6 +52,7 @@ public class DuoAuthFilter implements javax.servlet.Filter {
       "/rest/gadget/1.0/login"
   };
   private boolean isOAuthUnprotected = false;
+  private boolean failOpen = false;
 
   /**
    * Return true if url should not be protected by Duo auth, even if we have
@@ -68,6 +79,13 @@ public class DuoAuthFilter implements javax.servlet.Filter {
     return false;
   }
 
+  private Response sendPreAuthRequest(String username) throws Exception {
+    Http request = new Http("POST", host, "/auth/v2/preauth", 10 * 1000);
+    request.addParam("username", username);
+    request.signRequest(ikey, skey);
+    return request.executeHttpRequest();
+  }
+
   @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws java.io.IOException, javax.servlet.ServletException {
     HttpServletRequest httpServletRequest = (HttpServletRequest) request;
@@ -91,9 +109,21 @@ public class DuoAuthFilter implements javax.servlet.Filter {
           // are we coming from the Duo auth servlet?
           String duoResponse = (String) session.getAttribute(DUO_RESPONSE_ATTRIBUTE);
           if (duoResponse != null) {
-            String duoUsername = DuoWeb.verifyResponse(ikey, skey, akey, duoResponse);
-            if (duoUsername.equals(principal.getName())) {
-              session.setAttribute(DUO_AUTH_SUCCESS_KEY, true);
+            String duoUsername = null;
+            try {
+              duoUsername = DuoWeb.verifyResponse(ikey, skey, akey, duoResponse);
+            } catch (DuoWebException e) {
+              e.printStackTrace();
+              log.error(e.getMessage());
+            } catch (NoSuchAlgorithmException e) {
+              e.printStackTrace();
+              log.error(e.getMessage());
+            } catch (InvalidKeyException e) {
+              e.printStackTrace();
+              log.error(e.getMessage());
+            }
+            if (duoUsername != null && duoUsername.equals(principal.getName())) {
+                session.setAttribute(DUO_AUTH_SUCCESS_KEY, true);
             } else {
               needAuth = true;
             }
@@ -106,6 +136,43 @@ public class DuoAuthFilter implements javax.servlet.Filter {
     }     // we're serving a page for Duo auth
 
     if (needAuth) {
+      // Check if Duo authentication is even necessary by calling preauth
+      for (int i = 0; ; i++) {
+        try {
+          Response preAuthResponse = sendPreAuthRequest(principal.getName());
+          int statusCode = preAuthResponse.code();
+          if (statusCode/100 == 5) {
+            if (failOpen) {
+              chain.doFilter(request, response);
+              return;
+            }
+          }
+
+          // parse response
+          JSONObject json = new JSONObject(preAuthResponse.body().string());
+          if (!json.getString("stat").equals("OK")) {
+            throw new Exception(
+                "Duo error code (" + json.getInt("code") + "): " + json.getString("message"));
+          }
+          String result = json.getJSONObject("response").getString("result");
+          if (result.equals("allow")) {
+            chain.doFilter(request, response);
+            return;
+          }
+          break;
+        } catch (SocketTimeoutException e) {
+          if (i < MAX_TRIES) {
+            continue;
+          } else {
+            if (failOpen) {
+              chain.doFilter(request, response);
+              return;
+            }
+          }
+        } catch (Exception e) {
+          throw new ServletException(e);
+        }
+      }
       // Redirect to servlet if we can.  If the request is committed,
       // we can't, possibly because there's already a redirection in
       // progress; this is what Seraph's SecurityFilter does.
@@ -147,6 +214,10 @@ public class DuoAuthFilter implements javax.servlet.Filter {
 
     if (filterConfig.getInitParameter("unprotect.OAuth") != null) {
       isOAuthUnprotected = Boolean.getBoolean(filterConfig.getInitParameter("unprotect.OAuth"));
+    }
+
+    if (filterConfig.getInitParameter("fail.Open") != null) {
+      failOpen = Boolean.getBoolean(filterConfig.getInitParameter("fail.Open"));
     }
   }
 
