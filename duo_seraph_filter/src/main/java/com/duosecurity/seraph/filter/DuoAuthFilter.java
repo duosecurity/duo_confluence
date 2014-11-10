@@ -9,6 +9,8 @@ import java.net.URLEncoder;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Arrays;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
@@ -47,11 +49,12 @@ public class DuoAuthFilter implements javax.servlet.Filter {
   private String akey;
   private String host;
   private String loginUrl = "/plugins/servlet/duologin";
-  private String[] unprotectedDirs = {
+  private String[] defaultUnprotectedDirs = {
       "/download/resources/com.duosecurity.confluence.plugins.duo-twofactor:resources/",
       "/rest/gadget/1.0/login"
   };
-  private boolean isOAuthUnprotected = false;
+  private ArrayList<String> unprotectedDirs;
+  private boolean apiBypassEnabled = false;
   private boolean failOpen = false;
 
   /**
@@ -98,7 +101,7 @@ public class DuoAuthFilter implements javax.servlet.Filter {
     String contextPath = ((HttpServletRequest) request).getContextPath();
 
     if (!isUnprotectedPage(httpServletRequest.getRequestURI().replaceFirst(contextPath, ""))) {
-      if (request.getAttribute(OS_AUTHSTATUS_KEY) != null && isOAuthUnprotected) {
+      if (request.getAttribute(OS_AUTHSTATUS_KEY) != null && apiBypassEnabled && principal != null) {
         // Request has gone through OAuth, we're done if it succeeded
         if (!request.getAttribute(OS_AUTHSTATUS_KEY).equals(LOGIN_SUCCESS)) {
           throw new ServletException("OAuth authentication failed");
@@ -208,16 +211,20 @@ public class DuoAuthFilter implements javax.servlet.Filter {
     if (filterConfig.getInitParameter("login.url") != null) {
       loginUrl = filterConfig.getInitParameter("login.url");
     }
+    // Init our unprotected endpoints
+    unprotectedDirs = new ArrayList<String>(Arrays.asList(defaultUnprotectedDirs));
+
     if (filterConfig.getInitParameter("unprotected.dirs") != null) {
-      unprotectedDirs = filterConfig.getInitParameter("unprotected.dirs").split(" ");
+      String[] userSpecifiedUnprotectedDirs = filterConfig.getInitParameter("unprotected.dirs").split(" ");
+      unprotectedDirs.addAll(Arrays.asList(userSpecifiedUnprotectedDirs));
     }
 
-    if (filterConfig.getInitParameter("unprotect.OAuth") != null) {
-      isOAuthUnprotected = Boolean.getBoolean(filterConfig.getInitParameter("unprotect.OAuth"));
+    if (filterConfig.getInitParameter("bypass.APIs") != null) {
+      apiBypassEnabled = Boolean.parseBoolean(filterConfig.getInitParameter("bypass.APIs"));
     }
 
     if (filterConfig.getInitParameter("fail.Open") != null) {
-      failOpen = Boolean.getBoolean(filterConfig.getInitParameter("fail.Open"));
+      failOpen = Boolean.parseBoolean(filterConfig.getInitParameter("fail.Open"));
     }
   }
 
