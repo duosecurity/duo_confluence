@@ -46,14 +46,14 @@ if [ -e $CONFLUENCE/confluence/WEB-INF/lib/duo.jar ]; then
 fi
 
 # make sure we haven't already installed
-if [ -e $CONFLUENCE/confluence/WEB-INF/lib/duo-client-*.jar ]; then
+if find $CONFLUENCE/confluence/WEB-INF/lib/duo-client-*.jar > /dev/null; then
     echo "duo-client already exists in $CONFLUENCE/confluence/WEB-INF/lib.  Move or remove this jar to continue."
     echo 'exiting'
     exit 1
 fi
 
 # make sure we haven't already installed
-if [ -e $CONFLUENCE/confluence/WEB-INF/lib/duo-filter-*-SNAPSHOT.jar ]; then
+if find $CONFLUENCE/confluence/WEB-INF/lib/duo-filter-*-SNAPSHOT.jar > /dev/null; then
     echo "duo-filter already exists in $CONFLUENCE/confluence/WEB-INF/lib.  Move or remove this jar to continue."
     echo 'exiting'
     exit 1
