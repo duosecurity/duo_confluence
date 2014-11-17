@@ -84,9 +84,9 @@ if [ $? != 0 ]; then
 fi
 
 # install the seraph filter jar
-cp etc/duo-filter-1.3.4-SNAPSHOT.jar $CONFLUENCE/confluence/WEB-INF/lib
+cp etc/duo-filter-1.3.5-SNAPSHOT.jar $CONFLUENCE/confluence/WEB-INF/lib
 if [ $? != 0 ]; then
-    echo 'Could not copy duo-filter-1.3.4-SNAPSHOT.jar, please contact support@duosecurity.com'
+    echo 'Could not copy duo-filter-1.3.5-SNAPSHOT.jar, please contact support@duosecurity.com'
     echo 'exiting'
     exit 1
 fi
