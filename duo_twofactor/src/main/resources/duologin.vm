@@ -3,13 +3,13 @@
   <head>
     <title>Duo Authentication</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="decorator" content="atl.general"/>
   </head>
 
   <body style="text-align: center;">
-    <h1>Duo Authentication</h1>
 
      <div>
-       <script src="/download/resources/com.duosecurity.confluence.plugins.duo-twofactor:resources/Duo-Web-v1.bundled.js"></script>
+       <script src="$contextPath/download/resources/com.duosecurity.confluence.plugins.duo-twofactor:resources/Duo-Web-v1.bundled.js"></script>
        <script>
          Duo.init({
            'host': "$duoHost",
@@ -17,7 +17,7 @@
            'post_action': "$actionUrl"
          });
        </script>
-       <iframe height="500" width="620" id="duo_iframe" frameborder="0"></iframe>
+       <iframe height="500" width="620" id="duo_iframe" frameborder="0" align="center"></iframe>
      </div>
 
   </body>
