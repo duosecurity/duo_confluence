@@ -47,7 +47,8 @@ public class TwoFactorLoginServlet extends HttpServlet
         // Encode the template arguments in case we're < 5.1.2
         context.put("sigRequest", StringEscapeUtils.escapeJavaScript(request.getParameter(DUO_REQUEST_KEY)));
         context.put("duoHost", StringEscapeUtils.escapeJavaScript(request.getParameter(DUO_HOST_KEY)));
-        context.put("actionUrl", StringEscapeUtils.escapeJavaScript(UriBuilder.fromUri(actionUrl).queryParam(DUO_ORIGINAL_URL_KEY, actionArg).build().toString()));
+        context.put("actionUrl", StringEscapeUtils.escapeJavaScript(request.getContextPath() + UriBuilder.fromUri(actionUrl).queryParam(DUO_ORIGINAL_URL_KEY, actionArg).build().toString()));
+        context.put("contextPath", request.getContextPath());
         renderer.render("duologin.vm", context, response.getWriter());
     }
 
