@@ -10,7 +10,7 @@
     <h1>Duo Authentication</h1>
 
      <div>
-       <script src="$contextPath/download/resources/com.duosecurity.confluence.plugins.duo-twofactor:resources/Duo-Web-v1.bundled.js"></script>
+       <script src="$contextPath/download/resources/com.duosecurity.confluence.plugins.duo-twofactor:resources/Duo-Web-v2.js"></script>
        <script>
          Duo.init({
            'host': "$duoHost",

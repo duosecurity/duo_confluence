@@ -14,7 +14,7 @@
     </servlet>
 
     <web-resource key="resources" name="Web Resources">
-        <resource type="download" name="Duo-Web-v1.bundled.js" location="Duo-Web-v1.bundled.js"/>
+        <resource type="download" name="Duo-Web-v2.js" location="Duo-Web-v2.js"/>
     </web-resource>
 
 </atlassian-plugin>
