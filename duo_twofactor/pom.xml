@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.duosecurity.confluence.plugins</groupId>
     <artifactId>duo-twofactor</artifactId>
-    <version>1.4.1-SNAPSHOT</version>
+    <version>1.4.2</version>
 
     <organization>
         <name>Duo Security</name>
