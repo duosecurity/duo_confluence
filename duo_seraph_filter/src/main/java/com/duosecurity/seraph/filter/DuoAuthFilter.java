@@ -49,8 +49,8 @@ public class DuoAuthFilter implements javax.servlet.Filter {
   private String host;
   private String loginUrl = "/plugins/servlet/duologin";
   private String[] defaultUnprotectedDirs = {
-    "/download/resources/com.duosecurity.confluence.plugins.duo-twofactor:resources/",
-    "/rest/gadget/1.0/login"
+  	"/download/resources/com.duosecurity.confluence.plugins.duo-twofactor:resources/",
+	"/rest/gadget/1.0/login"
   };
   private ArrayList<String> unprotectedDirs;
   private boolean apiBypassEnabled = false;
@@ -81,44 +81,41 @@ public class DuoAuthFilter implements javax.servlet.Filter {
     return false;
   }
 
-  private Response sendPreAuthRequest(String username) throws Exception {
-    Http request = new Http("POST", host, "/auth/v2/preauth", 10);
-    request.addParam("username", username);
+  private Response sendCheckRequest() throws Exception {
+    Http request = new Http("GET", host, "/auth/v2/check", 10);
     request.signRequest(ikey, skey);
     return request.executeHttpRequest();
   }
 
-  private String preauthWithRetries(int num_tries, Principal principal)
+  private boolean shouldDuoAuthn(Principal principal)
   throws javax.servlet.ServletException{
-  // Check if Duo authentication is even necessary by calling preauth
+    // Check if Duo is accessible by calling /check
     for (int i = 0; ; i++) {
       try {
-        Response preAuthResponse = sendPreAuthRequest(principal.getName());
-        int statusCode = preAuthResponse.code();
+        Response checkResponse = sendCheckRequest();
+
+        int statusCode = checkResponse.code();
         if (statusCode/100 == 5) {
           if (failOpen) {
             log.warn("Duo 500 error. Fail open for user:" + principal.getName());
-            return "FAILOPEN";
+            return false;
+          } else {
+            throw new ServletException("Duo error code " + statusCode + ".  Failing authentication.");
           }
         }
 
-        // parse response
-        JSONObject json = new JSONObject(preAuthResponse.body().string());
-        if (!json.getString("stat").equals("OK")) {
+        JSONObject json = new JSONObject(checkResponse.body().string());
+        if (!("OK".equals(json.getString("stat")))) {
           throw new ServletException(
             "Duo error code (" + json.getInt("code") + "): " + json.getString("message"));
         }
-        String result = json.getJSONObject("response").getString("result");
-        if (result.equals("allow")) {
-          log.info("Duo 2FA bypass for user:" + principal.getName());
-          return "ALLOW";
-        }
+
         break;
       } catch (java.io.IOException e) {
-        if (i >= MAX_TRIES-1){
+        if (i >= MAX_TRIES-1) {
           if (failOpen) {
             log.warn("Duo server unreachable. Fail open for user:" + principal.getName());
-            return "FAILOPEN";
+            return false;
           } else {
             throw new ServletException(e);
           }
@@ -127,7 +124,8 @@ public class DuoAuthFilter implements javax.servlet.Filter {
         throw new ServletException(e);
       }
     }
-    return "AUTH";
+
+    return true;
   }
 
   private void redirectDuoAuth(Principal principal, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, String contextPath) 
@@ -204,20 +202,15 @@ public class DuoAuthFilter implements javax.servlet.Filter {
     }     // we're serving a page for Duo auth
 
     if (needAuth) {
-      String result = preauthWithRetries(MAX_TRIES, principal);
-
-      if (result.equals("ALLOW") || result.equals("FAILOPEN")) {
+      if (!failOpen || shouldDuoAuthn(principal)) {
+        redirectDuoAuth(principal, httpServletRequest, httpServletResponse, contextPath);
+      } else {
         session.setAttribute(DUO_AUTH_SUCCESS_KEY, true);
         chain.doFilter(request, response);
-        return;
-      } else {
-        redirectDuoAuth(principal, httpServletRequest, httpServletResponse, contextPath);
-        return;
       }
+    } else {
+      chain.doFilter(request, response);
     }
-
-    // We do not need Duo auth.  Continue with the filter chain.
-    chain.doFilter(request, response);
   }
 
   @Override public void init(final FilterConfig filterConfig) {
