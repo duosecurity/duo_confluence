@@ -1,16 +1,22 @@
 #!/bin/sh
 
-# default confluence install directory
+# default Confluence install directory
 CONFLUENCE=/opt/atlassian/confluence
 AKEY=`python -c "import hashlib, os;  print hashlib.sha1(os.urandom(32)).hexdigest()"`
 
+# duo file variables
+DUO_WEB_FILENAME=DuoWeb-1.3.jar
+DUO_CLIENT_FILENAME=duo-client-0.2.1.jar
+DUO_FILTER_FILENAME=duo-filter-1.3.7.jar
+DUO_PLUGIN_FILENAME=duo-twofactor-1.4.2.jar
+
 usage () {
     printf >&2 "Usage: $0 [-d confluence directory] -i ikey -s skey -h host\n"
-    printf >&2 "ikey, skey, and host can be found in Duo account's administration panel at admin.duosecurity.com\n"
+    printf >&2 "Your Duo Confluence application's ikey, skey, and host can be found in your Duo account's Admin Panel at admin.duosecurity.com\n"
 }
 
 while getopts d:i:s:h: o
-do  
+do
     case "$o" in
         d)  CONFLUENCE="$OPTARG";;
         i)  IKEY="$OPTARG";;
@@ -38,62 +44,83 @@ if [ ! -e $CONFLUENCE/confluence/WEB-INF/lib ]; then
     exit 1
 fi
 
-# make sure we haven't already installed
-if [ -e $CONFLUENCE/confluence/WEB-INF/lib/duo.jar ]; then
-    echo "duo.jar already exists in $CONFLUENCE/confluence/WEB-INF/lib.  Move or remove this jar to continue."
-    echo 'exiting'
-    exit 1
+# check for existing plugin install
+if [ -e $CONFLUENCE/confluence/WEB-INF/lib/duo.jar -o $CONFLUENCE/confluence/WEB-INF/lib/DuoWeb-*.jar ]; then
+    echo "duo web jar already exists in $CONFLUENCE/confluence/WEB-INF/lib."
+    UPGRADE_DUO=1
 fi
 
-# make sure we haven't already installed
-if find $CONFLUENCE/confluence/WEB-INF/lib/duo-client-*.jar > /dev/null; then
-    echo "duo-client already exists in $CONFLUENCE/confluence/WEB-INF/lib.  Move or remove this jar to continue."
-    echo 'exiting'
-    exit 1
+# check for existing plugin install
+if find $CONFLUENCE/confluence/WEB-INF/lib/duo-client-*.jar > /dev/null ; then
+    echo "duo-client already exists in $CONFLUENCE/confluence/WEB-INF/lib."
+    UPGRADE_DUO=1
 fi
 
-# make sure we haven't already installed
-if find $CONFLUENCE/confluence/WEB-INF/lib/duo-filter-*-SNAPSHOT.jar > /dev/null; then
-    echo "duo-filter already exists in $CONFLUENCE/confluence/WEB-INF/lib.  Move or remove this jar to continue."
-    echo 'exiting'
-    exit 1
+# check for existing plugin install
+if find $CONFLUENCE/confluence/WEB-INF/lib/duo-filter-*.jar > /dev/null ; then
+    echo "duo-filter already exists in $CONFLUENCE/confluence/WEB-INF/lib."
+    UPGRADE_DUO=1
 fi
 
 # we don't actually write to web.xml, so just warn if it's already there
 grep '<filter-name>duoauth</filter-name>' $CONFLUENCE/confluence/WEB-INF/web.xml >/dev/null
 if [ $? = 0 ]; then
-    echo "Warning: It looks like the Duo authenticator has already been added to Confluence's web.xml."
+    echo "It looks like the Duo authenticator has already been added to Confluence's web.xml."
+    UPGRADE_DUO=1
 fi
 
-echo "Copying in Duo integration files..."
+# give them a chance to quit
+if [ "$UPGRADE_DUO" = "1" ]; then
+    echo "Continuing installation overwrites the current plugin version and uses the existing application information in web.xml."
+    while true; do
+        read -p "Continue installing Duo (y/n)?" choice
+        case "$choice" in
+          y|Y ) echo "Installing..."; break;;
+          n|N ) echo "Exiting installation; no changes made."; exit;;
+          * ) echo "Enter y for yes or n for no.";;
+        esac
+    done
+fi
+
+echo "Copying in Duo application files..."
 
 # install the duo_java jar
-cp etc/duo.jar $CONFLUENCE/confluence/WEB-INF/lib
+rm $CONFLUENCE/confluence/WEB-INF/lib/duo.jar
+rm $CONFLUENCE/confluence/WEB-INF/lib/DuoWeb-*.jar
+cp etc/"${DUO_WEB_FILENAME}" $CONFLUENCE/confluence/WEB-INF/lib
 if [ $? != 0 ]; then
-    echo 'Could not copy duo.jar, please contact support@duosecurity.com'
+    echo 'Could not copy ${DUO_WEB_FILENAME}, please contact support@duosecurity.com'
     echo 'exiting'
     exit 1
 fi
 
 # install the duo_client_java jar
-cp etc/duo-client-0.2.1.jar $CONFLUENCE/confluence/WEB-INF/lib
+rm $CONFLUENCE/confluence/WEB-INF/lib/duo-client-*.jar
+cp etc/"${DUO_CLIENT_FILENAME}" $CONFLUENCE/confluence/WEB-INF/lib
 if [ $? != 0 ]; then
-    echo 'Could not copy duo-client-0.2.1.jar, please contact support@duosecurity.com'
+    echo 'Could not copy ${DUO_CLIENT_FILENAME}, please contact support@duosecurity.com'
     echo 'exiting'
     exit 1
 fi
 
 # install the seraph filter jar
-cp etc/duo-filter-1.3.7.jar $CONFLUENCE/confluence/WEB-INF/lib
+rm $CONFLUENCE/confluence/WEB-INF/lib/duo-filter-*.jar
+cp etc/"${DUO_FILTER_FILENAME}" $CONFLUENCE/confluence/WEB-INF/lib
 if [ $? != 0 ]; then
-    echo 'Could not copy duo-filter-1.3.5-SNAPSHOT.jar, please contact support@duosecurity.com'
+    echo 'Could not copy ${DUO_FILTER_FILENAME}, please contact support@duosecurity.com'
     echo 'exiting'
     exit 1
 fi
 
+if [ "$UPGRADE_DUO" = "1" ]; then
 echo "duo_confluence jars have been installed. Next steps, in order:"
-echo "- Upload and install the plugin in etc/duo-twofactor-1.4.2.jar "
-echo "  using the Confluence web UI."
+echo "- Upload and install the plugin in etc/${DUO_PLUGIN_FILENAME} "
+echo "  using the Confluence web UI. See https://duo.com/docs/confluence."
+echo "- Restart Confluence."
+else
+echo "duo_confluence jars have been installed. Next steps, in order:"
+echo "- Upload and install the plugin in etc/${DUO_PLUGIN_FILENAME} "
+echo "  using the Confluence web UI. See https://duo.com/docs/confluence."
 echo "- Edit web.xml, located at $CONFLUENCE/confluence/WEB-INF/web.xml."
 echo "- Locate the filter:"
 echo "    <filter>"
@@ -136,3 +163,4 @@ echo "        <dispatcher>FORWARD</dispatcher>"
 echo "        <dispatcher>REQUEST</dispatcher>"
 echo "    </filter-mapping>"
 echo "- Restart Confluence."
+fi
