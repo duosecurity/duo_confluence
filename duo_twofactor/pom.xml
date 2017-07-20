@@ -5,9 +5,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+      <groupId>com.duosecurity</groupId>
+      <artifactId>duo_confluence</artifactId>
+      <version>1.4.3-SNAPSHOT</version>
+    </parent>
     <groupId>com.duosecurity.confluence.plugins</groupId>
     <artifactId>duo-twofactor</artifactId>
-    <version>1.4.3-SNAPSHOT</version>
 
     <organization>
         <name>Duo Security</name>
