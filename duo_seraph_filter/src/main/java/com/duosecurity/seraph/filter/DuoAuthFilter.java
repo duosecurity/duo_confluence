@@ -55,7 +55,7 @@ public class DuoAuthFilter implements javax.servlet.Filter {
   private ArrayList<String> unprotectedDirs;
   private boolean apiBypassEnabled = false;
   private boolean failOpen = false;
-
+  
   /**
    * Return true if url should not be protected by Duo auth, even if we have
    * a local user.
@@ -81,20 +81,21 @@ public class DuoAuthFilter implements javax.servlet.Filter {
     return false;
   }
 
-  private Response sendCheckRequest() throws Exception {
-    Http request = new Http("GET", host, "/auth/v2/check", 10);
+  private Response sendPreauthRequest(String username) throws Exception {
+    Http request = new Http("POST", host, "/auth/v2/preauth", 10);
+    request.addParam("username", username);
     request.signRequest(ikey, skey);
     return request.executeHttpRequest();
   }
 
   private boolean shouldDuoAuthn(Principal principal)
   throws javax.servlet.ServletException{
-    // Check if Duo is accessible by calling /check
+    // Check if Duo auth is possible and necessary by calling /preauth
     for (int i = 0; ; i++) {
       try {
-        Response checkResponse = sendCheckRequest();
+        Response preauthResponse = sendPreauthRequest(principal.getName());
 
-        int statusCode = checkResponse.code();
+        int statusCode = preauthResponse.code();
         if (statusCode/100 == 5) {
           if (failOpen) {
             log.warn("Duo 500 error. Fail open for user:" + principal.getName());
@@ -104,10 +105,16 @@ public class DuoAuthFilter implements javax.servlet.Filter {
           }
         }
 
-        JSONObject json = new JSONObject(checkResponse.body().string());
+        JSONObject json = new JSONObject(preauthResponse.body().string());
         if (!("OK".equals(json.getString("stat")))) {
           throw new ServletException(
             "Duo error code (" + json.getInt("code") + "): " + json.getString("message"));
+        }
+
+        String result = json.getJSONObject("response").getString("result");
+        if ("allow".equals(result)) {
+          log.info("Duo 2FA bypass for user: " + principal.getName());
+          return false;
         }
 
         break;
@@ -202,7 +209,7 @@ public class DuoAuthFilter implements javax.servlet.Filter {
     }     // we're serving a page for Duo auth
 
     if (needAuth) {
-      if (!failOpen || shouldDuoAuthn(principal)) {
+      if (shouldDuoAuthn(principal)) {
         redirectDuoAuth(principal, httpServletRequest, httpServletResponse, contextPath);
       } else {
         session.setAttribute(DUO_AUTH_SUCCESS_KEY, true);
@@ -243,3 +250,4 @@ public class DuoAuthFilter implements javax.servlet.Filter {
 
   }
 }
+
