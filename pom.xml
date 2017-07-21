@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.duosecurity</groupId>
   <artifactId>duo_confluence</artifactId>
-  <version>1.4.3-SNAPSHOT</version>
+  <version>1.4.3</version>
   <packaging>pom</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
