@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.duosecurity</groupId>
+  <artifactId>duo_confluence</artifactId>
+  <version>1.4.3-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <name>Duo Security's Atlassian Confluence plugin</name>
+  <description>Two Factor Authentication for Atlassian Confluence</description>
+
+  <modules>
+    <module>duo_seraph_filter</module>
+    <module>duo_twofactor</module>
+  </modules>
+</project>
