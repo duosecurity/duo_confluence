@@ -45,7 +45,7 @@ if [ ! -e $CONFLUENCE/confluence/WEB-INF/lib ]; then
 fi
 
 # check for existing plugin install
-if [ -e $CONFLUENCE/confluence/WEB-INF/lib/duo.jar -o $CONFLUENCE/confluence/WEB-INF/lib/DuoWeb-*.jar ]; then
+if [ -e $CONFLUENCE/confluence/WEB-INF/lib/duo.jar -o -e $CONFLUENCE/confluence/WEB-INF/lib/DuoWeb-*.jar ]; then
     echo "duo web jar already exists in $CONFLUENCE/confluence/WEB-INF/lib."
     UPGRADE_DUO=1
 fi
