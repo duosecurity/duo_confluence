@@ -53,6 +53,7 @@ public class DuoAuthFilter implements javax.servlet.Filter {
 	"/rest/gadget/1.0/login"
   };
   private ArrayList<String> unprotectedDirs;
+  private ArrayList<String> bypassHosts;
   private boolean apiBypassEnabled = false;
   private boolean failOpen = false;
   
@@ -168,6 +169,27 @@ public class DuoAuthFilter implements javax.servlet.Filter {
 
   }
 
+  private boolean remoteHostIsBypassed(String remoteAddr) {
+    if (remoteAddr==null) {
+      log.error("remoteAddr is null, this should never happen.");
+      return false;
+    }
+
+    if (bypassHosts!=null) {
+      if (bypassHosts.contains(remoteAddr)) {
+       if (log.isDebugEnabled()) {
+         log.debug("host "+remoteAddr+" is whitelisted.");
+       }
+        return true;
+      }
+    }
+
+    if (log.isDebugEnabled()) {
+      log.debug("host "+remoteAddr+ " is not whitelisted.");
+    }
+    return false;
+  }
+
   @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
   throws java.io.IOException, javax.servlet.ServletException {
     HttpServletRequest httpServletRequest = (HttpServletRequest) request;
@@ -177,45 +199,50 @@ public class DuoAuthFilter implements javax.servlet.Filter {
     HttpSession session = httpServletRequest.getSession();
     Principal principal = httpServletRequest.getUserPrincipal();
 
+    String remoteAddr = httpServletRequest.getRemoteAddr();
     String contextPath = ((HttpServletRequest) request).getContextPath();
 
-    if (!isUnprotectedPage(httpServletRequest.getRequestURI().replaceFirst(contextPath, ""))) {
-      if (request.getAttribute(OS_AUTHSTATUS_KEY) != null && apiBypassEnabled && principal != null) {
-        // Request has gone through OAuth, we're done if it succeeded
-        if (!request.getAttribute(OS_AUTHSTATUS_KEY).equals(LOGIN_SUCCESS)) {
-          throw new ServletException("OAuth authentication failed");
-        }
-      } else if (principal != null) {
-        // User has logged in locally, has there been a Duo auth?
-        if (session.getAttribute(DUO_AUTH_SUCCESS_KEY) == null) {
-          // are we coming from the Duo auth servlet?
-          String duoResponse = (String) session.getAttribute(DUO_RESPONSE_ATTRIBUTE);
-          if (duoResponse != null) {
-            String duoUsername = null;
-            try {
-              duoUsername = DuoWeb.verifyResponse(ikey, skey, akey, duoResponse);
-            } catch (DuoWebException e) {
-              e.printStackTrace();
-              log.error(e.getMessage());
-            } catch (NoSuchAlgorithmException e) {
-              e.printStackTrace();
-              log.error(e.getMessage());
-            } catch (InvalidKeyException e) {
-              e.printStackTrace();
-              log.error(e.getMessage());
-            }
-            if (duoUsername != null && duoUsername.equals(principal.getName())) {
-              session.setAttribute(DUO_AUTH_SUCCESS_KEY, true);
+    if (remoteHostIsBypassed(remoteAddr)) {
+      needAuth=false;
+    } else {
+      if (!isUnprotectedPage(httpServletRequest.getRequestURI().replaceFirst(contextPath, ""))) {
+        if (request.getAttribute(OS_AUTHSTATUS_KEY) != null && apiBypassEnabled && principal != null) {
+          // Request has gone through OAuth, we're done if it succeeded
+          if (!request.getAttribute(OS_AUTHSTATUS_KEY).equals(LOGIN_SUCCESS)) {
+            throw new ServletException("OAuth authentication failed");
+          }
+        } else if (principal != null) {
+          // User has logged in locally, has there been a Duo auth?
+          if (session.getAttribute(DUO_AUTH_SUCCESS_KEY) == null) {
+            // are we coming from the Duo auth servlet?
+            String duoResponse = (String) session.getAttribute(DUO_RESPONSE_ATTRIBUTE);
+            if (duoResponse != null) {
+              String duoUsername = null;
+              try {
+                duoUsername = DuoWeb.verifyResponse(ikey, skey, akey, duoResponse);
+              } catch (DuoWebException e) {
+                e.printStackTrace();
+                log.error(e.getMessage());
+              } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+                log.error(e.getMessage());
+              } catch (InvalidKeyException e) {
+                e.printStackTrace();
+                log.error(e.getMessage());
+              }
+              if (duoUsername != null && duoUsername.equals(principal.getName())) {
+                session.setAttribute(DUO_AUTH_SUCCESS_KEY, true);
+              } else {
+                needAuth = true;
+              }
             } else {
               needAuth = true;
             }
-          } else {
-            needAuth = true;
-          }
-        } // user has already authed with us this session
-      } // no user -> Seraph has not required auth -> we don't either,
+          } // user has already authed with us this session
+        } // no user -> Seraph has not required auth -> we don't either,
         // or user came from OAuth and we're configured to not require 2fa for that
-    }     // we're serving a page for Duo auth
+      }     // we're serving a page for Duo auth
+    }
 
     if (needAuth) {
       if (shouldDuoAuthn(principal)) {
@@ -252,6 +279,16 @@ public class DuoAuthFilter implements javax.servlet.Filter {
 
     if (filterConfig.getInitParameter("fail.Open") != null) {
       failOpen = Boolean.parseBoolean(filterConfig.getInitParameter("fail.Open"));
+    }
+    /*
+      Supports bypassing 2FA for whitelisted hosts for example for API access.
+      "bypass.hosts" is a list of 1..n IP addresses seperated by space (" ")
+     */
+    if (filterConfig.getInitParameter("bypass.hosts") != null) {
+
+      String[] userSpecifiedBypassHosts = filterConfig.getInitParameter("bypass.hosts").split(" ");
+      bypassHosts = new ArrayList<String>(Arrays.asList(userSpecifiedBypassHosts));
+      log.info("request from the following hosts will bypass DUO 2FA"+Arrays.toString(userSpecifiedBypassHosts));
     }
   }
 
