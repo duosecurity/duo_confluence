@@ -10,8 +10,8 @@
     <h1>Duo Authentication</h1>
 
      <div>
-       <script src="$contextPath/download/resources/com.duosecurity.confluence.plugins.duo-twofactor:resources/Duo-Web-v2.js"></script>
-       <script>
+       <script type="text/javascript" src="$contextPath/download/resources/com.duosecurity.confluence.plugins.duo-twofactor:resources/Duo-Web-v2.js"></script>
+       <script type="text/javascript">
          Duo.init({
            'host': "$duoHost",
            'sig_request': "$sigRequest",
@@ -19,7 +19,7 @@
          });
        </script>
        <iframe id="duo_iframe" frameborder="0"></iframe>
-       <style>
+       <style type="text/css">
           #duo_iframe {
             width: 100%;
             min-width: 304px;
