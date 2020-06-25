@@ -42,7 +42,7 @@ public class TwoFactorLoginServlet extends HttpServlet
         final String actionUrl = request.getServletPath();
         // Encode the original URL suitably for a query param, since the
         // template will quote it if we're >= 5.1.2.
-        final String actionArg = URLEncoder.encode(request.getParameter(DUO_ORIGINAL_URL_KEY), "UTF-8");
+        final String actionArg = URLEncoder.encode(request.getParameter(DUO_ORIGINAL_URL_KEY), "UTF-8").replaceAll("\\+", "%20");
 
         // Encode the template arguments in case we're < 5.1.2
         context.put("sigRequest", StringEscapeUtils.escapeJavaScript(request.getParameter(DUO_REQUEST_KEY)));
