@@ -160,6 +160,7 @@ public class DuoAuthFilter implements javax.servlet.Filter {
       qs = DUO_REQUEST_KEY + "=" + URLEncoder.encode(sigRequest, "UTF-8");
       qs = qs + "&" + DUO_HOST_KEY + "=" + URLEncoder.encode(host, "UTF-8");
       qs = qs + "&" + DUO_ORIGINAL_URL_KEY + "=" + URLEncoder.encode(originalURL, "UTF-8");
+      qs = qs.replaceAll("\\+", "%20");
       redirectUrl = contextPath + loginUrl + "?" + qs;
       httpServletResponse.sendRedirect(redirectUrl);
     } else {
